@@ -6,6 +6,7 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using Chat.Grpc;
+using Newtonsoft.Json;
 
 namespace Chat.RoomManager.Services {
   public class RoomManagerService : Grpc.RoomManager.RoomManagerBase {
@@ -23,6 +24,8 @@ namespace Chat.RoomManager.Services {
         Name = request.Name,
         Address = request.Address,
       });
+
+      Console.WriteLine(JsonConvert.SerializeObject(_rooms.Last()));
 
       return Task.FromResult(_rooms.Last());
     }
