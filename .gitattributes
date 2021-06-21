@@ -1,0 +1,7 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Custom for Visual Studio
+*.cs     diff=csharp encoding=utf-8
+*.sln    merge=union encoding=utf-8
+*.csproj merge=union encoding=utf-8
