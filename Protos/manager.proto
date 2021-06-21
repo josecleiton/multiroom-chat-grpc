@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option csharp_namespace = "Chat.Grpc";
+
+package chat;
+
+service RoomManager {
+  rpc ListRoom(google.protobuf.Empty) returns (ListRoomResponse);
+  rpc AcknowledgeRoom(AcknowledgeRoomRequest) returns (Room);
+  rpc CloseRoom(Room) returns (google.protobuf.Empty);
+}
+
+message ListRoomResponse {
+  repeated Room rooms = 1;
+}
+
+message Room {
+  string id = 1;
+  string name = 2;
+  string address = 3;
+}
+
+message  AcknowledgeRoomRequest {
+  string name = 1;
+  string address = 2;
+}
