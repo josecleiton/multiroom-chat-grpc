@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Chat.Client.UseCases;
-using Newtonsoft.Json;
 using static Chat.Grpc.Message.Types;
 
 namespace Chat.Client {

@@ -1,6 +1,5 @@
 using System;
 using Grpc.Net.Client;
-using Chat.Grpc;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using System.Threading;
@@ -12,12 +11,12 @@ namespace Chat.Client.UseCases {
   public class RoomUseCase : IDisposable {
     private readonly GrpcChannel _roomChannel;
     private readonly CancellationToken _cancelToken;
-    private readonly Message _message;
+    private readonly Grpc.Message _message;
 
-    public RoomUseCase(Uri address, User user, Room room, CancellationToken token) {
+    public RoomUseCase(Uri address, User user, Grpc.Room room, CancellationToken token) {
       _roomChannel = GrpcChannel.ForAddress(address);
       _cancelToken = token;
-      _message = new Message {
+      _message = new Grpc.Message {
         Room = room,
         User = user,
       };
@@ -27,13 +26,13 @@ namespace Chat.Client.UseCases {
       _roomChannel.Dispose();
     }
 
-    private Grpc.ChatManager.ChatManagerClient CreateClient() {
+    Grpc.ChatManager.ChatManagerClient CreateClient() {
       return new Grpc.ChatManager.ChatManagerClient(_roomChannel);
     }
 
     public async Task SendMessage(string message) {
 
-      await CreateClient().SendMessageAsync(new Message(_message) {
+      await CreateClient().SendMessageAsync(new Grpc.Message(_message) {
         Message_ = message,
       });
     }

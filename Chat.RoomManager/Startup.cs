@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Chat.Grpc;
 using Chat.RoomManager.Services;
 using Microsoft.AspNetCore.Builder;

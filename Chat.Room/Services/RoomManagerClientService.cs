@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Chat.Grpc;
 using Grpc.Net.Client;
 
 namespace Chat.Room.Services {
@@ -14,7 +13,7 @@ namespace Chat.Room.Services {
       _channel = GrpcChannel.ForAddress("http://localhost:5001");
 
       var client = new Grpc.RoomManager.RoomManagerClient(_channel);
-      Room = client.AcknowledgeRoom(new AcknowledgeRoomRequest {
+      Room = client.AcknowledgeRoom(new Grpc.AcknowledgeRoomRequest {
         Name = Environment.GetEnvironmentVariable("NAME"),
         Address = $"http://localhost:{Environment.GetEnvironmentVariable("PORT")}",
       });
