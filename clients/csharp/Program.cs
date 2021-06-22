@@ -6,7 +6,7 @@ using Chat.Client.UseCases;
 namespace Chat.Client {
   class Program {
     static async Task Main(string[] args) {
-      var cancelRegistration = new CancellationTokenRegistration();
+      var tkSource = new CancellationTokenSource();
 
       // ListRoom Singleton
       var listRoomUseCase = ListRoomUseCase.Instance();
@@ -24,7 +24,7 @@ namespace Chat.Client {
         new Uri(room.Address),
         user,
         room,
-        cancelRegistration.Token
+        tkSource.Token
       );
 
       // Lista de tarefas assincronas:
@@ -35,11 +35,12 @@ namespace Chat.Client {
         roomUseCase.ReceiveMessages(),
         roomUseCase.ListUsers(),
         Task.Run(async () => {
-          await Task.Delay(2500);
+          await Task.Delay(2500, tkSource.Token);
           await roomUseCase.SendMessage("oi");
-          await Task.Delay(10000);
+          await Task.Delay(10000, tkSource.Token);
           await roomUseCase.ExitRoom();
-        })
+          tkSource.Cancel();
+        }, tkSource.Token)
       );
     }
   }
