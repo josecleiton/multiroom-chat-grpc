@@ -29,7 +29,7 @@ namespace Chat.Room.Services {
       await JoinUser(request);
 
       while (!context.CancellationToken.IsCancellationRequested) {
-        var message = await _messageCh.Reader.ReadAsync();
+        var message = await _messageCh.Reader.ReadAsync(context.CancellationToken);
         await responseStream.WriteAsync(message);
       }
 
@@ -69,7 +69,7 @@ namespace Chat.Room.Services {
         result.Users.AddRange(_userList);
 
         await responseStream.WriteAsync(result);
-        await _userCh.Reader.ReadAsync();
+        await _userCh.Reader.ReadAsync(context.CancellationToken);
       } while (!context.CancellationToken.IsCancellationRequested);
     }
 
