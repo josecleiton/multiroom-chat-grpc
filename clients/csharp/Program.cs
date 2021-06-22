@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Chat.Client.UseCases;
@@ -32,7 +31,7 @@ namespace Chat.Client {
       // 1. Escuta novas mensagens
       // 2. Escuta quais usuários estão online na sala
       // 3. Manda uma mensage e sai da sala
-      var tasks = new List<Task> {
+      await Task.WhenAll(
         roomUseCase.ReceiveMessages(),
         roomUseCase.ListUsers(),
         Task.Run(async () => {
@@ -41,9 +40,7 @@ namespace Chat.Client {
           await Task.Delay(10000);
           await roomUseCase.ExitRoom();
         })
-      };
-
-      await Task.WhenAll(tasks);
+      );
     }
   }
 }

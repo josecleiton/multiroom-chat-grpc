@@ -42,16 +42,14 @@ namespace Chat.Room.Services {
     private async Task JoinUser(Grpc.User user) {
       _userList.Add(user);
 
-      var tasks = new List<Task>{
+      await Task.WhenAll(
         Task.Run(async () => await _userCh.Writer.WriteAsync(user)),
         Task.Run(async () => await _messageCh.Writer.WriteAsync(new Grpc.Message {
           Room = _room,
           User = RoomUser(),
           Message_ = $"User {user.Name} joined."
-        })),
-      };
-
-      await Task.WhenAll(tasks);
+        }))
+      );
     }
 
     private Grpc.User RoomUser() => new Grpc.User {
@@ -83,16 +81,14 @@ namespace Chat.Room.Services {
         }
       }
 
-      var tasks = new List<Task>{
+      await Task.WhenAll(
         Task.Run(() => _userCh.Writer.WriteAsync(request)),
         Task.Run(() => _messageCh.Writer.WriteAsync(new Grpc.Message {
           Message_ = $"User {request.Name} exited",
           Room = _room,
           User = RoomUser(),
-        })),
-      };
-
-      await Task.WhenAll(tasks);
+        }))
+      );
 
       return new Empty();
     }
