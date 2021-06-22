@@ -15,9 +15,8 @@ namespace Chat.Room {
     public void ConfigureServices(IServiceCollection services) {
       var roomManager = new RoomManagerClientService();
       services.AddSingleton(roomManager);
-      services.AddSingleton(Channel.CreateUnbounded<Message>());
       services.AddSingleton(Channel.CreateUnbounded<User>());
-      services.AddSingleton<IList<User>>(new List<User>());
+      services.AddSingleton<IList<(User, Channel<Message>)>>(new List<(User, Channel<Message>)>());
 
       services.AddGrpc();
     }
