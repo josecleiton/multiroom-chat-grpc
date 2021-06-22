@@ -1,4 +1,6 @@
-﻿using Chat.RoomManager.Services;
+﻿using System.Collections.Generic;
+using Chat.Grpc;
+using Chat.RoomManager.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +13,7 @@ namespace Chat.RoomManager {
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services) {
       services.AddGrpc();
+      services.AddSingleton<IList<Room>>(new List<Room>());
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

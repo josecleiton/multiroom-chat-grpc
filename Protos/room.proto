@@ -1,22 +1,24 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
+import "manager.proto";
 
 option csharp_namespace = "Chat.Grpc";
 
 package chat;
 
 service ChatManager {
-	rpc ReceiveMessage(google.protobuf.Empty) returns (stream Message);
-	rpc SendMessage(Message) returns (google.protobuf.Empty);
+  rpc ReceiveMessage(google.protobuf.Empty) returns (stream Message);
+  rpc SendMessage(Message) returns (google.protobuf.Empty);
 }
 
 message Message {
-	message User {
-		string id = 1;
-		string name = 2;
-	}
+  message User {
+    string id = 1;
+    string name = 2;
+  }
 
-	User user = 1;
-	string message = 2;
+  User user = 1;
+  string message = 2;
+  Room room = 3;
 }

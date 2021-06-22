@@ -1,31 +1,31 @@
 using System;
+using System.Threading.Tasks;
 using Chat.Grpc;
 using Grpc.Net.Client;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Chat.Room.Services {
-  public class RoomManagerClientService {
+  public class RoomManagerClientService : IDisposable {
     public Grpc.Room Room { get; private set; }
-    private readonly ILogger<RoomManagerClientService> _logger;
+    private readonly GrpcChannel _channel;
 
-    public RoomManagerClientService(ILogger<RoomManagerClientService> logger) {
-      _logger = logger;
-      _logger.LogInformation("Connecting with Manager");
+    public RoomManagerClientService() {
 
 
-      var channel = GrpcChannel.ForAddress("http://localhost:5001");
-      var client = new Grpc.RoomManager.RoomManagerClient(channel);
+      _channel = GrpcChannel.ForAddress("http://localhost:5001");
 
+      var client = new Grpc.RoomManager.RoomManagerClient(_channel);
       Room = client.AcknowledgeRoom(new AcknowledgeRoomRequest {
         Name = Environment.GetEnvironmentVariable("NAME"),
         Address = $"http://localhost:{Environment.GetEnvironmentVariable("PORT")}",
       });
 
+    }
 
-      _logger.LogInformation(JsonConvert.SerializeObject(Room));
+    public void Dispose() {
+      var client = new Grpc.RoomManager.RoomManagerClient(_channel);
+      Task.Run(() => client.CloseRoomAsync(Room));
 
-      channel.Dispose();
+      _channel.Dispose();
     }
   }
 }

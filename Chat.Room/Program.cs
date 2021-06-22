@@ -16,8 +16,8 @@ namespace Chat.Room {
         Host.CreateDefaultBuilder(args)
             .ConfigureWebHostDefaults(webBuilder => {
               webBuilder.ConfigureKestrel(options => {
-                options.ListenAnyIP(Int32.Parse(Environment.GetEnvironmentVariable("PORT")), o => o.Protocols = HttpProtocols.Http2);
-                options.ListenAnyIP(Int32.Parse(Environment.GetEnvironmentVariable("HTTP_PORT")), o => o.Protocols = HttpProtocols.Http1AndHttp2);
+                options.ListenAnyIP(Int32.Parse(Environment.GetEnvironmentVariable("PORT") ?? "5001"), o => o.Protocols = HttpProtocols.Http2);
+                options.ListenAnyIP(Int32.Parse(Environment.GetEnvironmentVariable("HTTP_PORT") ?? "5080"), o => o.Protocols = HttpProtocols.Http1AndHttp2);
               });
 
               webBuilder.UseStartup<Startup>();

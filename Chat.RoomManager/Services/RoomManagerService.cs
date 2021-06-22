@@ -13,9 +13,9 @@ namespace Chat.RoomManager.Services {
     private readonly ILogger<RoomManagerService> _logger;
     private readonly IList<Room> _rooms;
 
-    public RoomManagerService(ILogger<RoomManagerService> logger) {
+    public RoomManagerService(ILogger<RoomManagerService> logger, IList<Room> rooms) {
       _logger = logger;
-      _rooms = new List<Room>();
+      _rooms = rooms;
     }
 
     public override Task<Room> AcknowledgeRoom(AcknowledgeRoomRequest request, ServerCallContext context) {
@@ -33,7 +33,9 @@ namespace Chat.RoomManager.Services {
     public override Task<ListRoomResponse> ListRoom(Empty request, ServerCallContext context) {
       var response = new ListRoomResponse();
 
-      response.Rooms.AddRange(_rooms);
+      response.Rooms.Add(_rooms);
+
+      Console.WriteLine(JsonConvert.SerializeObject(_rooms));
 
       return Task.FromResult(response);
     }
@@ -44,6 +46,7 @@ namespace Chat.RoomManager.Services {
 
         if (room.Id == request.Id) {
           _rooms.RemoveAt(i);
+          _logger.LogInformation($"Room {room.Id} - {room.Name} closed");
           break;
         }
       }
