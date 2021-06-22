@@ -4,6 +4,7 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Chat.Room.Services {
   public class ChatManagerService : Grpc.ChatManager.ChatManagerBase {
@@ -30,6 +31,11 @@ namespace Chat.Room.Services {
       while (!context.CancellationToken.IsCancellationRequested) {
         var message = await _messageCh.Reader.ReadAsync();
         await responseStream.WriteAsync(message);
+      }
+
+      // se o cliente fechar a conexão abruptamente
+      if (_userList.Any((user) => user.Id == request.Id)) {
+        await ExitRoom(request, context);
       }
     }
 
