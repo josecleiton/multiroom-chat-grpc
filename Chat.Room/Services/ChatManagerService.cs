@@ -70,8 +70,6 @@ namespace Chat.Room.Services {
     }
 
     public override async Task<Empty> ExitRoom(Grpc.User request, ServerCallContext context) {
-      var tasks = new List<Task>();
-
       for (int i = 0; i < _userList.Count; i++) {
         if (_userList[i].Id == request.Id) {
           _userList.RemoveAt(i);
@@ -79,12 +77,14 @@ namespace Chat.Room.Services {
         }
       }
 
-      tasks.Add(Task.Run(() => _userCh.Writer.WriteAsync(request)));
-      tasks.Add(Task.Run(() => _messageCh.Writer.WriteAsync(new Grpc.Message {
-        Message_ = $"User {request.Name} exited",
-        Room = _room,
-        User = RoomUser(),
-      })));
+      var tasks = new List<Task>{
+        Task.Run(() => _userCh.Writer.WriteAsync(request)),
+        Task.Run(() => _messageCh.Writer.WriteAsync(new Grpc.Message {
+          Message_ = $"User {request.Name} exited",
+          Room = _room,
+          User = RoomUser(),
+        })),
+      };
 
       await Task.WhenAll(tasks);
 
