@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Chat.Room.Services;
 using System.Threading.Channels;
 using Chat.Grpc;
+using System.Collections.Generic;
 
 namespace Chat.Room {
   public class Startup {
@@ -13,9 +14,10 @@ namespace Chat.Room {
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services) {
       var roomManager = new RoomManagerClientService();
-      var channel = Channel.CreateUnbounded<Message>();
       services.AddSingleton(roomManager);
-      services.AddSingleton(channel);
+      services.AddSingleton(Channel.CreateUnbounded<Message>());
+      services.AddSingleton(Channel.CreateUnbounded<User>());
+      services.AddSingleton<IList<User>>(new List<User>());
 
       services.AddGrpc();
     }

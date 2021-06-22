@@ -5,7 +5,6 @@ using Google.Protobuf.WellKnownTypes;
 using System.Threading;
 using Newtonsoft.Json;
 using Grpc.Core;
-using static Chat.Grpc.Message.Types;
 
 namespace Chat.Client.UseCases {
   public class RoomUseCase : IDisposable {
@@ -13,7 +12,7 @@ namespace Chat.Client.UseCases {
     private readonly CancellationToken _cancelToken;
     private readonly Grpc.Message _message;
 
-    public RoomUseCase(Uri address, User user, Grpc.Room room, CancellationToken token) {
+    public RoomUseCase(Uri address, Grpc.User user, Grpc.Room room, CancellationToken token) {
       _roomChannel = GrpcChannel.ForAddress(address);
       _cancelToken = token;
       _message = new Grpc.Message {
@@ -38,7 +37,7 @@ namespace Chat.Client.UseCases {
     }
 
     public async Task ReceiveMessages() {
-      using var streamingCall = CreateClient().ReceiveMessage(new Empty(), cancellationToken: _cancelToken);
+      using var streamingCall = CreateClient().ReceiveMessage(_message.User, cancellationToken: _cancelToken);
 
       try {
         while (await streamingCall.ResponseStream.MoveNext(cancellationToken: _cancelToken)) {
@@ -52,6 +51,23 @@ namespace Chat.Client.UseCases {
       } catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled) {
         Console.WriteLine("Stream cancelled");
       }
+    }
+
+    public async Task ListUsers() {
+      using var streamingCall = CreateClient().ListUsers(new Empty(), cancellationToken: _cancelToken);
+
+      try {
+        while (await streamingCall.ResponseStream.MoveNext(cancellationToken: _cancelToken)) {
+          var usersReceived = streamingCall.ResponseStream.Current;
+          Console.WriteLine($"Users connected: {usersReceived.Users.Count}");
+        }
+      } catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled) {
+        Console.WriteLine("Stream cancelled");
+      }
+    }
+
+    public async Task ExitRoom() {
+      await CreateClient().ExitRoomAsync(_message.User);
     }
   }
 }

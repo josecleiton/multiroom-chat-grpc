@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Chat.Client.UseCases;
-using static Chat.Grpc.Message.Types;
 
 namespace Chat.Client {
   class Program {
@@ -15,7 +15,7 @@ namespace Chat.Client {
 
       var room = rooms[0];
 
-      var user = new User { Id = Guid.NewGuid().ToString(), Name = "Opa" };
+      var user = new Grpc.User { Id = Guid.NewGuid().ToString(), Name = "Opa" };
 
       var roomUseCase = new RoomUseCase(
         new Uri(room.Address),
@@ -24,9 +24,18 @@ namespace Chat.Client {
         cancelRegistration.Token
       );
 
-      await roomUseCase.SendMessage("oi");
+      var tasks = new List<Task> {
+        roomUseCase.ReceiveMessages(),
+        roomUseCase.ListUsers(),
+        Task.Run(async () => {
+          await Task.Delay(2500);
+          await roomUseCase.SendMessage("oi");
+          await Task.Delay(10000);
+          await roomUseCase.ExitRoom();
+        })
+      };
 
-      await roomUseCase.ReceiveMessages();
+      await Task.WhenAll(tasks);
     }
   }
 }
