@@ -50,6 +50,8 @@ namespace Chat.Client.UseCases {
         Console.ReadLine();
       } catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled) {
         Console.WriteLine("Stream cancelled");
+      } catch (OperationCanceledException) {
+
       }
     }
 

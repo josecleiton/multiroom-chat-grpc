@@ -85,7 +85,12 @@ namespace Chat.Room.Services {
         result.Users.AddRange(_userList.Select(item => item.Item1));
 
         await responseStream.WriteAsync(result);
-        await _userCh.Reader.ReadAsync(context.CancellationToken);
+
+        try {
+          await _userCh.Reader.ReadAsync(context.CancellationToken);
+        } catch (OperationCanceledException) {
+        }
+
       } while (!context.CancellationToken.IsCancellationRequested);
     }
 
