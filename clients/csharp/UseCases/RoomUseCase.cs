@@ -48,13 +48,14 @@ namespace Chat.Client.UseCases {
         }
         Console.ReadLine();
       } catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled) {
-        Console.WriteLine("Stream cancelled");
+        Console.WriteLine("Receive Stream cancelled");
       } catch (OperationCanceledException) {
 
       }
     }
 
     public async Task ListUsers() {
+      await Task.Delay(100);
       using var streamingCall = CreateClient().ListUsers(_message.User, cancellationToken: _cancelToken);
 
       try {
@@ -62,8 +63,8 @@ namespace Chat.Client.UseCases {
           var usersReceived = streamingCall.ResponseStream.Current;
           Console.WriteLine($"Users connected: {usersReceived.Users.Count}");
         }
-      } catch (RpcException) {
-        Console.WriteLine("Stream cancelled");
+      } catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled) {
+        Console.WriteLine("List Users Stream cancelled");
       }
     }
 

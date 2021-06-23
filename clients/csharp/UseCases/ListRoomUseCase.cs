@@ -7,7 +7,8 @@ using System;
 namespace Chat.Client.UseCases {
   public class ListRoomUseCase : IDisposable {
     private static ListRoomUseCase? _instance;
-    public static ListRoomUseCase Instance() {
+
+    public static ListRoomUseCase CreateUseCase() {
       return _instance ??= new ListRoomUseCase();
     }
 

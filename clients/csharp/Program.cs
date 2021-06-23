@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Chat.Client.UseCases;
+using Newtonsoft.Json;
 
 namespace Chat.Client {
   class Program {
@@ -9,9 +10,11 @@ namespace Chat.Client {
       var tkSource = new CancellationTokenSource();
 
       // ListRoom Singleton
-      var listRoomUseCase = ListRoomUseCase.Instance();
+      var listRoomUseCase = ListRoomUseCase.CreateUseCase();
 
       var rooms = await listRoomUseCase.Execute();
+
+      Console.WriteLine(JsonConvert.SerializeObject(rooms));
 
       // Arbitrariamente seleciona a primeira sala
       var room = rooms[0];
