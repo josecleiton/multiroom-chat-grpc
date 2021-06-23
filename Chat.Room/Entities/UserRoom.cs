@@ -15,10 +15,5 @@ namespace Chat.Room.Entities {
         SingleReader = true
       });
     }
-
-    public void CloseAll() {
-      MessageCh.Writer.Complete();
-      UserChangedCh.Writer.Complete();
-    }
   }
 }

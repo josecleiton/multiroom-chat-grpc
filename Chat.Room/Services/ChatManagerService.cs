@@ -95,16 +95,15 @@ namespace Chat.Room.Services {
     }
 
     private RoomUser GetUser(Grpc.User request) {
-      try {
-        return _userDict[request.Id];
-      } catch (KeyNotFoundException) {
+      if (!_userDict.TryGetValue(request.Id, out RoomUser? user)) {
         throw new RpcException(new Status(StatusCode.NotFound, "user not found"));
       }
+
+      return user;
     }
 
     public override async Task ListUsers(Grpc.User request, IServerStreamWriter<Grpc.ListUser> responseStream, ServerCallContext context) {
       var user = GetUser(request);
-
 
       try {
         do {
@@ -121,18 +120,14 @@ namespace Chat.Room.Services {
     }
 
     public override async Task<Empty> ExitRoom(Grpc.User request, ServerCallContext context) {
-      var roomUser = GetUser(request);
-
-      roomUser.CloseAll();
-
-      if (!_userDict.TryRemove(request.Id, out RoomUser? retrieved)) {
+      if (!_userDict.TryRemove(request.Id, out RoomUser? roomUser)) {
         return new Empty();
       }
 
       await Task.WhenAll(
         UpdateUserList(context.CancellationToken),
         WriteMessageOnUserChannel(new Grpc.Message {
-          Message_ = $"User {request.Name} exited",
+          Message_ = $"User {roomUser.User.Name} exited",
           Room = _room,
           User = RoomUser(),
         }, context.CancellationToken)
