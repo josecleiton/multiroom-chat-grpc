@@ -94,8 +94,13 @@ namespace Chat.Room.Services {
       await Task.WhenAll(tasks);
     }
 
-    private RoomUser GetUser(Grpc.User request) =>
-      _userDict[request.Id] ?? throw new RpcException(new Status(StatusCode.NotFound, "user not found"));
+    private RoomUser GetUser(Grpc.User request) {
+      try {
+        return _userDict[request.Id];
+      } catch (KeyNotFoundException) {
+        throw new RpcException(new Status(StatusCode.NotFound, "user not found"));
+      }
+    }
 
     public override async Task ListUsers(Grpc.User request, IServerStreamWriter<Grpc.ListUser> responseStream, ServerCallContext context) {
       var user = GetUser(request);
@@ -120,7 +125,7 @@ namespace Chat.Room.Services {
 
       roomUser.CloseAll();
 
-      if (!_userDict.Remove(request.Id, out RoomUser? retrieved)) {
+      if (!_userDict.TryRemove(request.Id, out RoomUser? retrieved)) {
         return new Empty();
       }
 

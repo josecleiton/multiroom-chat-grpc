@@ -14,8 +14,7 @@ namespace Chat.Room {
     // This method gets called by the runtime. Use this method to add services to the container.
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services) {
-      var roomManager = new RoomManagerClientService();
-      services.AddSingleton(roomManager);
+      services.AddSingleton<RoomManagerClientService>();
       services.AddSingleton(Channel.CreateUnbounded<User>());
       services.AddSingleton(new ConcurrentDictionary<string, RoomUser>());
 
@@ -24,6 +23,8 @@ namespace Chat.Room {
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
+      app.ApplicationServices.GetRequiredService<RoomManagerClientService>();
+
       if (env.IsDevelopment()) {
         app.UseDeveloperExceptionPage();
       }
