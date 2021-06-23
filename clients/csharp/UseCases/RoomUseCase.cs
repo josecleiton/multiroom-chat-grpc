@@ -1,7 +1,6 @@
 using System;
 using Grpc.Net.Client;
 using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
 using System.Threading;
 using Newtonsoft.Json;
 using Grpc.Core;
@@ -56,14 +55,14 @@ namespace Chat.Client.UseCases {
     }
 
     public async Task ListUsers() {
-      using var streamingCall = CreateClient().ListUsers(new Empty(), cancellationToken: _cancelToken);
+      using var streamingCall = CreateClient().ListUsers(_message.User, cancellationToken: _cancelToken);
 
       try {
         while (await streamingCall.ResponseStream.MoveNext(cancellationToken: _cancelToken)) {
           var usersReceived = streamingCall.ResponseStream.Current;
           Console.WriteLine($"Users connected: {usersReceived.Users.Count}");
         }
-      } catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled) {
+      } catch (RpcException) {
         Console.WriteLine("Stream cancelled");
       }
     }

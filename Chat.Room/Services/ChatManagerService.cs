@@ -3,51 +3,50 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using System.Threading;
-using System.Threading.Channels;
 using System.Collections.Generic;
-using System.Linq;
 using System;
+using System.Collections.Concurrent;
+using Chat.Room.Entities;
+using System.Linq;
+using System.Threading.Channels;
 
 namespace Chat.Room.Services {
   public class ChatManagerService : Grpc.ChatManager.ChatManagerBase {
     private readonly ILogger<ChatManagerService> _logger;
-    private readonly Channel<Grpc.User> _userCh;
-    private readonly IList<(Grpc.User, Channel<Grpc.Message>)> _userList;
+    private readonly ConcurrentDictionary<string, RoomUser> _userDict;
     private readonly Grpc.Room _room;
 
     public ChatManagerService(ILogger<ChatManagerService> logger,
-    Channel<Grpc.User> userCh,
-    IList<(Grpc.User, Channel<Grpc.Message>)> userList,
+    ConcurrentDictionary<string, RoomUser> userDict,
     RoomManagerClientService managerClient) {
       _logger = logger;
-      _userCh = userCh;
-      _userList = userList;
+      _userDict = userDict;
       _room = managerClient.Room;
     }
 
     public override async Task ReceiveMessage(Grpc.User request, IServerStreamWriter<Grpc.Message> responseStream, ServerCallContext context) {
-      var (_, ch) = await JoinUser(request, context.CancellationToken);
+      var roomUser = await JoinUser(request, context.CancellationToken);
 
       try {
         while (!context.CancellationToken.IsCancellationRequested) {
-          var message = await ch.Reader.ReadAsync(context.CancellationToken);
+          var message = await roomUser.MessageCh.Reader.ReadAsync(context.CancellationToken);
           await responseStream.WriteAsync(message);
         }
 
-      } catch (OperationCanceledException) {
+      } catch (Exception ex) when (ex is OperationCanceledException || ex is ChannelClosedException) {
         // se o cliente fechar a conexão abruptamente
-        if (_userList.Any((tuple) => tuple.Item1.Id == request.Id)) {
+        if (_userDict.ContainsKey(roomUser.User.Id)) {
           await ExitRoom(request, context);
         }
       }
     }
 
-    private async Task<(Grpc.User, Channel<Grpc.Message>)> JoinUser(Grpc.User user, CancellationToken cancellationToken) {
-      var userTuple = (user, Channel.CreateUnbounded<Grpc.Message>());
-      _userList.Add(userTuple);
+    private async Task<RoomUser> JoinUser(Grpc.User user, CancellationToken cancellationToken) {
+      var roomUser = new RoomUser(user);
+      _userDict.GetOrAdd(user.Id, roomUser);
 
       await Task.WhenAll(
-        Task.Run(async () => await _userCh.Writer.WriteAsync(user)),
+        UpdateUserList(cancellationToken),
         WriteMessageOnUserChannel(new Grpc.Message {
           Room = _room,
           User = RoomUser(),
@@ -55,7 +54,7 @@ namespace Chat.Room.Services {
         }, cancellationToken)
       );
 
-      return userTuple;
+      return roomUser;
     }
 
     private Grpc.User RoomUser() => new Grpc.User {
@@ -72,41 +71,61 @@ namespace Chat.Room.Services {
     private async Task WriteMessageOnUserChannel(Grpc.Message message, CancellationToken cancelToken = default) {
       var tasks = new List<Task>();
 
-      foreach (var (user, ch) in _userList) {
-        tasks.Add(Task.Run(async () => await ch.Writer.WriteAsync(message)));
+      foreach (var (_, user) in _userDict) {
+        tasks.Add(Task.Run(async () =>
+          await user.MessageCh.Writer.WriteAsync(message, cancelToken),
+          cancelToken
+        ));
       }
 
       await Task.WhenAll(tasks);
     }
 
-    public override async Task ListUsers(Empty request, IServerStreamWriter<Grpc.ListUser> responseStream, ServerCallContext context) {
-      do {
-        var result = new Grpc.ListUser();
-        result.Users.AddRange(_userList.Select(item => item.Item1));
+    private async Task UpdateUserList(CancellationToken cancelToken) {
+      var tasks = new List<Task>();
 
-        await responseStream.WriteAsync(result);
+      foreach (var (_, user) in _userDict) {
+        tasks.Add(Task.Run(async () =>
+          await user.UserChangedCh.Writer.WriteAsync(true, cancelToken),
+          cancelToken
+        ));
+      }
 
-        try {
-          await _userCh.Reader.ReadAsync(context.CancellationToken);
-        } catch (OperationCanceledException) {
-        }
+      await Task.WhenAll(tasks);
+    }
 
-      } while (!context.CancellationToken.IsCancellationRequested);
+    private RoomUser GetUser(Grpc.User request) =>
+      _userDict[request.Id] ?? throw new RpcException(new Status(StatusCode.NotFound, "user not found"));
+
+    public override async Task ListUsers(Grpc.User request, IServerStreamWriter<Grpc.ListUser> responseStream, ServerCallContext context) {
+      var user = GetUser(request);
+
+
+      try {
+        do {
+          var result = new Grpc.ListUser();
+          result.Users.AddRange(_userDict.Values.Select((roomUser) => roomUser.User));
+
+          await responseStream.WriteAsync(result);
+          await user.UserChangedCh.Reader.ReadAsync(context.CancellationToken);
+
+        } while (!context.CancellationToken.IsCancellationRequested);
+      } catch (Exception ex) when (ex is OperationCanceledException || ex is ChannelClosedException) {
+        throw new RpcException(new Status(StatusCode.Cancelled, "cancelled"));
+      }
     }
 
     public override async Task<Empty> ExitRoom(Grpc.User request, ServerCallContext context) {
-      for (int i = 0; i < _userList.Count; i++) {
-        var (user, ch) = _userList[i];
+      var roomUser = GetUser(request);
 
-        if (user.Id == request.Id) {
-          _userList.RemoveAt(i);
-          ch.Writer.Complete();
-          break;
-        }
+      roomUser.CloseAll();
+
+      if (!_userDict.Remove(request.Id, out RoomUser? retrieved)) {
+        return new Empty();
       }
 
       await Task.WhenAll(
-        Task.Run(() => _userCh.Writer.WriteAsync(request)),
+        UpdateUserList(context.CancellationToken),
         WriteMessageOnUserChannel(new Grpc.Message {
           Message_ = $"User {request.Name} exited",
           Room = _room,

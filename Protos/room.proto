@@ -10,7 +10,7 @@ package chat;
 service ChatManager {
   rpc ReceiveMessage(User) returns (stream Message);
   rpc SendMessage(Message) returns (google.protobuf.Empty);
-  rpc ListUsers(google.protobuf.Empty) returns (stream ListUser);
+  rpc ListUsers(User) returns (stream ListUser);
   rpc ExitRoom(User) returns (google.protobuf.Empty);
 }
 

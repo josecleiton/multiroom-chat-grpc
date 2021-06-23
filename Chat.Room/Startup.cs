@@ -6,7 +6,8 @@ using Microsoft.Extensions.Hosting;
 using Chat.Room.Services;
 using System.Threading.Channels;
 using Chat.Grpc;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
+using Chat.Room.Entities;
 
 namespace Chat.Room {
   public class Startup {
@@ -16,7 +17,7 @@ namespace Chat.Room {
       var roomManager = new RoomManagerClientService();
       services.AddSingleton(roomManager);
       services.AddSingleton(Channel.CreateUnbounded<User>());
-      services.AddSingleton<IList<(User, Channel<Message>)>>(new List<(User, Channel<Message>)>());
+      services.AddSingleton(new ConcurrentDictionary<string, RoomUser>());
 
       services.AddGrpc();
     }
