@@ -55,7 +55,7 @@ namespace Chat.Client.UseCases {
     }
 
     public async Task ListUsers() {
-      await Task.Delay(100);
+      await Task.Delay(100, _cancelToken);
       using var streamingCall = CreateClient().ListUsers(_message.User, cancellationToken: _cancelToken);
 
       try {
