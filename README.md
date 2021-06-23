@@ -15,6 +15,7 @@ Construção de um sistema de chat com múltiplas salas utilizando gRPC.
 ## requisitos
 
 - .NET Core 5
+- Docker Compose **use se for utilizar outra solução como cliente**
 
 ## como inicializar
 
@@ -25,6 +26,12 @@ $ ./bin/Chat.RoomManager
 $ PORT=5002 HTTP_PORT=5080 NAME="Grupo da Família" ./bin/Chat.Room
 # rode o exemplo de cliente
 $ ./bin/Chat.Client
+```
+
+### docker + docker compose
+
+```bash
+$ docker-compose up --build
 ```
 
 ## contribuição

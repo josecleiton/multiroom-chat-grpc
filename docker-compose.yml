@@ -1,0 +1,77 @@
+version: "3.3"
+
+services:
+  room-manager:
+    container_name: chat-room-manager
+    build:
+      context: .
+      dockerfile: ./Chat.RoomManager/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    networks:
+      - chat-manager-network
+
+  room0:
+    container_name: chat-room-0
+    build:
+      context: .
+      dockerfile: ./Chat.Room/Dockerfile
+    expose:
+      - 5080
+    environment:
+      - HOST_MANAGER=http://room-manager:5001
+      - HTTP_PORT=5080
+      - PORT=5002
+      - NAME=Grupo da UNEB
+    ports:
+      - "5002:5002"
+    depends_on:
+      - room-manager
+    networks:
+      - chat-manager-network
+    restart: unless-stopped
+
+  room1:
+    container_name: chat-room-1
+    build:
+      context: .
+      dockerfile: ./Chat.Room/Dockerfile
+    expose:
+      - 5080
+    environment:
+      - HOST_MANAGER=http://room-manager:5001
+      - HTTP_PORT=5080
+      - PORT=5003
+      - NAME=Grupo da família
+    ports:
+      - "5003:5003"
+    depends_on:
+      - room-manager
+    networks:
+      - chat-manager-network
+    restart: unless-stopped
+
+  room2:
+    container_name: chat-room-2
+    build:
+      context: .
+      dockerfile: ./Chat.Room/Dockerfile
+    expose:
+      - 5080
+    environment:
+      - HOST_MANAGER=http://room-manager:5001
+      - HTTP_PORT=5080
+      - PORT=5004
+      - NAME=Grupo de Sistemas Distribuídos
+    ports:
+      - "5004:5004"
+    depends_on:
+      - room-manager
+    networks:
+      - chat-manager-network
+    restart: unless-stopped
+
+networks:
+  chat-manager-network:
+    driver: bridge
