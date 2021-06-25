@@ -1,3 +1,4 @@
 [submodule "flutter_app"]
 	path = clients/flutter_app
 	url = git@github.com:Daanilo-s19/aplication_flutter_grpc.git
+	branch = master
