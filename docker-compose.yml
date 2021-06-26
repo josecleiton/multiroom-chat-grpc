@@ -3,6 +3,7 @@ version: "3.3"
 services:
   room-manager:
     container_name: chat-room-manager
+    image: sd-multiroom-chat-grpc-manager
     build:
       context: .
       dockerfile: ./Chat.RoomManager/Dockerfile
@@ -14,6 +15,7 @@ services:
 
   room0:
     container_name: chat-room-0
+    image: sd-multiroom-chat-grpc-room
     build:
       context: .
       dockerfile: ./Chat.Room/Dockerfile
@@ -34,9 +36,7 @@ services:
 
   room1:
     container_name: chat-room-1
-    build:
-      context: .
-      dockerfile: ./Chat.Room/Dockerfile
+    image: sd-multiroom-chat-grpc-room
     expose:
       - 5080
     environment:
@@ -54,9 +54,7 @@ services:
 
   room2:
     container_name: chat-room-2
-    build:
-      context: .
-      dockerfile: ./Chat.Room/Dockerfile
+    image: sd-multiroom-chat-grpc-room
     expose:
       - 5080
     environment:
@@ -72,6 +70,23 @@ services:
       - chat-network
     restart: unless-stopped
 
+  room3:
+    container_name: chat-room-3
+    image: sd-multiroom-chat-grpc-room
+    expose:
+      - 5080
+    environment:
+      - HOST_MANAGER=http://room-manager:5001
+      - HTTP_PORT=5080
+      - PORT=5005
+      - NAME=Grupo Flutter
+    ports:
+      - "5005:5005"
+    depends_on:
+      - room-manager
+    networks:
+      - chat-network
+    restart: unless-stopped
 networks:
   chat-network:
     driver: bridge
