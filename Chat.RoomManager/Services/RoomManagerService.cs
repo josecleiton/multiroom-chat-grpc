@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Chat.Grpc;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace Chat.RoomManager.Services {
   public class RoomManagerService : Grpc.RoomManager.RoomManagerBase {
@@ -56,7 +57,10 @@ namespace Chat.RoomManager.Services {
     public override Task<ListRoomResponse> ListRoom(Empty request, ServerCallContext context) {
       var response = new ListRoomResponse();
 
-      response.Rooms.AddRange(_roomDict.Values);
+      response.Rooms.AddRange(_roomDict.Values.OrderBy(
+        room => room.Name, StringComparer.OrdinalIgnoreCase
+      ));
+
 
       return Task.FromResult(response);
     }
