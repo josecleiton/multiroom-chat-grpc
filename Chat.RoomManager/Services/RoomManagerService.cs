@@ -62,7 +62,6 @@ namespace Chat.RoomManager.Services {
         room => room.Name, StringComparer.OrdinalIgnoreCase
       ));
 
-
       return Task.FromResult(response);
     }
 
