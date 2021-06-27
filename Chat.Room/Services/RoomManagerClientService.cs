@@ -38,10 +38,7 @@ namespace Chat.Room.Services {
     }
 
     public void Dispose() {
-      var client = new Grpc.RoomManager.RoomManagerClient(_channel);
-      Task.Run(async () => await client.CloseRoomAsync(Room), _cancellationToken);
-      _logger.LogInformation("Disposing Manager Client");
-
+      _logger.LogInformation("RoomManagerClient dispose");
       _channel.Dispose();
     }
   }
