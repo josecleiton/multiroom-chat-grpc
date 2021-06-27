@@ -15,7 +15,7 @@ Construção de um sistema de chat com múltiplas salas utilizando gRPC.
 ## requisitos
 
 - .NET Core 5
-- Docker Compose **use se for utilizar outra solução como cliente**
+- Docker Compose **apenas servidor**
 
 ## como inicializar
 
