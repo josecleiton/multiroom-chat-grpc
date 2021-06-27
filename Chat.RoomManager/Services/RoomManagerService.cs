@@ -49,8 +49,9 @@ namespace Chat.RoomManager.Services {
           await Task.Delay(2000, context.CancellationToken);
         }
       } catch (Exception) {
-        _roomDict.TryRemove(request.Id, out Room? popReturn);
         _logger.LogWarning($"Room {request.Id} closed");
+      } finally {
+        _roomDict.TryRemove(request.Id, out Room? popReturn);
       }
     }
 
