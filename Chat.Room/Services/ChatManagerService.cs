@@ -27,7 +27,7 @@ namespace Chat.Room.Services {
     public override async Task<Empty> JoinRoom(Grpc.User request, ServerCallContext context) {
       var roomUser = await JoinUser(request, context.CancellationToken);
 
-      Console.WriteLine(JsonConvert.SerializeObject(request));
+      _logger.LogInformation($"JoinRoom - {JsonConvert.SerializeObject(request)}");
 
       return new Empty();
     }
