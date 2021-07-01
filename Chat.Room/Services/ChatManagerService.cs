@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using Chat.Room.Entities;
 using System.Linq;
 using System.Threading.Channels;
+using Newtonsoft.Json;
 
 namespace Chat.Room.Services {
   public class ChatManagerService : Grpc.ChatManager.ChatManagerBase {
@@ -23,9 +24,27 @@ namespace Chat.Room.Services {
       _userDict = userDict;
       _room = managerClient.Room;
     }
+    public override async Task<Empty> JoinRoom(Grpc.User request, ServerCallContext context) {
+      var roomUser = await JoinUser(request, context.CancellationToken);
+
+      Console.WriteLine(JsonConvert.SerializeObject(request));
+
+      return new Empty();
+    }
+
+    // public override Task<Empty> UpdateName(Grpc.UpdateNameRequest request, ServerCallContext context) {
+    //   try {
+    //     var roomUser = _userDict[request.UserId];
+    //     roomUser.User.Name = request.Name;
+
+    //     return Task.FromResult(new Empty());
+    //   } catch (KeyNotFoundException) {
+    //     throw new RpcException(new Status(StatusCode.NotFound, "user not found"));
+    //   }
+    // }
 
     public override async Task ReceiveMessage(Grpc.User request, IServerStreamWriter<Grpc.Message> responseStream, ServerCallContext context) {
-      var roomUser = await JoinUser(request, context.CancellationToken);
+      var roomUser = GetUser(request);
 
       try {
         while (!context.CancellationToken.IsCancellationRequested) {
@@ -43,7 +62,10 @@ namespace Chat.Room.Services {
 
     private async Task<RoomUser> JoinUser(Grpc.User user, CancellationToken cancellationToken) {
       var roomUser = new RoomUser(user);
-      _userDict.GetOrAdd(user.Id, roomUser);
+
+      if (!_userDict.TryAdd(user.Id, roomUser)) {
+        throw new RpcException(new Status(StatusCode.Internal, "failed to add user to list"));
+      }
 
       await Task.WhenAll(
         UpdateUserList(cancellationToken),
@@ -112,7 +134,7 @@ namespace Chat.Room.Services {
 
           await responseStream.WriteAsync(result);
           await user.UserChangedCh.Reader.ReadAsync(context.CancellationToken);
-
+          Console.WriteLine($"Listening list user: {JsonConvert.SerializeObject(user)}");
         } while (!context.CancellationToken.IsCancellationRequested);
       } catch (Exception ex) when (ex is OperationCanceledException || ex is ChannelClosedException) {
         throw new RpcException(new Status(StatusCode.Cancelled, "cancelled"));

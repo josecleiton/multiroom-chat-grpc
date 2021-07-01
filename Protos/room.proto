@@ -8,6 +8,8 @@ option csharp_namespace = "Chat.Grpc";
 package chat;
 
 service ChatManager {
+  rpc JoinRoom(User) returns (google.protobuf.Empty);
+  // rpc UpdateName(UpdateNameRequest) returns (google.protobuf.Empty);
   rpc ReceiveMessage(User) returns (stream Message);
   rpc SendMessage(Message) returns (google.protobuf.Empty);
   rpc ListUsers(User) returns (stream ListUser);
@@ -20,6 +22,11 @@ message User {
   string id = 1;
   string name = 2;
 }
+
+// message UpdateNameRequest {
+//   string userId = 1;
+//   string name = 2;
+// }
 
 message Message {
   User user = 1;
