@@ -52,10 +52,14 @@ namespace Chat.Room.Services {
           await responseStream.WriteAsync(message);
         }
 
-      } catch (Exception ex) when (ex is OperationCanceledException || ex is ChannelClosedException) {
+      } catch (Exception ex) when (
+          ex is OperationCanceledException ||
+          ex is ChannelClosedException ||
+          ex is TaskCanceledException
+        ) {
         // se o cliente fechar a conexão abruptamente
         if (_userDict.ContainsKey(roomUser.User.Id)) {
-          await ExitRoom(request, context);
+          await PopUser(roomUser.User.Id);
         }
       }
     }
@@ -128,32 +132,42 @@ namespace Chat.Room.Services {
       var user = GetUser(request);
 
       try {
-        do {
+        while (!context.CancellationToken.IsCancellationRequested) {
           var result = new Grpc.ListUser();
           result.Users.AddRange(_userDict.Values.Select((roomUser) => roomUser.User));
 
           await responseStream.WriteAsync(result);
           await user.UserChangedCh.Reader.ReadAsync(context.CancellationToken);
-          Console.WriteLine($"Listening list user: {JsonConvert.SerializeObject(user)}");
-        } while (!context.CancellationToken.IsCancellationRequested);
-      } catch (Exception ex) when (ex is OperationCanceledException || ex is ChannelClosedException) {
+        }
+      } catch (Exception ex) when (
+          ex is OperationCanceledException ||
+          ex is ChannelClosedException ||
+          ex is TaskCanceledException
+        ) {
         throw new RpcException(new Status(StatusCode.Cancelled, "cancelled"));
       }
     }
 
-    public override async Task<Empty> ExitRoom(Grpc.User request, ServerCallContext context) {
-      if (!_userDict.TryRemove(request.Id, out RoomUser? roomUser)) {
-        return new Empty();
+    private async Task PopUser(String userId, CancellationToken? cancellationToken = null) {
+      if (!_userDict.TryRemove(userId, out RoomUser? roomUser)) {
+        return;
       }
 
+      var source = new CancellationTokenSource();
+      CancellationToken token = cancellationToken ?? source.Token;
+
       await Task.WhenAll(
-        UpdateUserList(context.CancellationToken),
+        UpdateUserList(token),
         WriteMessageOnUserChannel(new Grpc.Message {
           Message_ = $"User {roomUser.User.Name} exited",
           Room = _room,
           User = RoomUser(),
-        }, context.CancellationToken)
+        }, token)
       );
+    }
+
+    public override async Task<Empty> ExitRoom(Grpc.User request, ServerCallContext context) {
+      await PopUser(request.Id, context.CancellationToken);
 
       return new Empty();
     }
